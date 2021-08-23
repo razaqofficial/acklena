@@ -71,7 +71,7 @@ jobs:
         steps:
             - checkout
             - restore_cache:
-                  key: [frontend-dependencies]
+                  keys: [frontend-dependencies]
             - run:
                   name: Test Frontend
                   command: |
@@ -84,9 +84,9 @@ jobs:
         steps:
             - checkout
             -   restore_cache:
-                    key: [backend-dependencies]
+                    keys: [backend-dependencies]
             -   run:
-                    name: Test Frontend
+                    name: Test Backend
                     command: |
                         cd ~/project/backend
                         npm i
