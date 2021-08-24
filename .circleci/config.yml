@@ -1,5 +1,6 @@
 version: 2.1
-
+orbs:
+    slack: circleci/slack@4.0
 commands:
     destroy-environment:
         description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -30,6 +31,27 @@ commands:
                       #  Add revert code here. You can find this in the Getting Started section.
                         exit 1
                       fi
+    slack-fail-notification:
+        description: Send notification to slack channel when there's a failure
+        steps:
+            - slack/notify:
+                  custom: |
+                    {
+                       "blocks": [
+                         {
+                            "type": "section",
+                            "fields": [
+                                {
+                                  "type": "plain_text",
+                                  "text": "*This is a text notification*",
+                                  "emoji": true
+                                 }
+                            ]
+                         }
+                       ]
+                    }
+            event: fail
+                  
 
 jobs:
     build-frontend:
@@ -101,6 +123,7 @@ jobs:
                   command: |
                       cd ~/project/frontend
                       npm audit fix --audit-level=critical --force
+            - slack-fail-notification
     scan-backend:
         docker:
             - image: circleci/node:13.8.0
@@ -111,6 +134,7 @@ jobs:
                   command: |
                       cd ~/project/backend
                       npm audit --audit-level=critical
+            - slack-fail-notification
 workflows:
     default:
         jobs:
@@ -122,5 +146,7 @@ workflows:
                   requires: [build-backend]
             - scan-frontend:
                   requires: [build-frontend]
+                  context: slack-secrets
             - scan-backend:
                   requires: [build-backend]
+                  context: slack-secrets
