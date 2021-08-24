@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-    slack: circleci/slack@4.0
+    slack: circleci/slack@4.1
 commands:
     destroy-environment:
         description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -102,6 +102,13 @@ jobs:
                   command: |
                       cd ~/project/frontend
                       npm audit fix --audit-level=critical --force
+            - slack/notify
+              event: fail
+              mentions: '@dev'
+              template: basic_fail_1
+            - slack/notify
+              event: pass
+              template: basic_success_1
     scan-backend:
         docker:
             - image: circleci/node:13.8.0
@@ -112,28 +119,13 @@ jobs:
                   command: |
                       cd ~/project/backend
                       npm audit --audit-level=critical
-    slack-fail-notification:
-        description: Send notification to slack channel when there's a failure
-        docker:
-            - image: 'cimg/base:stable'
-        steps:
-            -  slack/notify:
-                  custom: |
-                      {
-                         "blocks": [
-                           {
-                              "type": "section",
-                              "fields": [
-                                  {
-                                    "type": "plain_text",
-                                    "text": "*This is a text notification*",
-                                    "emoji": true
-                                   }
-                              ]
-                           }
-                         ]
-                      }
-                  event: fail
+            - slack/notify
+                event: fail
+                mentions: '@dev'
+                template: basic_fail_1
+            - slack/notify
+                event: pass
+                template: basic_success_1
 workflows:
     default:
         jobs:
@@ -147,6 +139,3 @@ workflows:
                   requires: [build-frontend]
             - scan-backend:
                   requires: [build-backend]
-            - slack-fail-notification:
-                  context: slack-secrets
-                  
