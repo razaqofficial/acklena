@@ -51,9 +51,6 @@ commands:
                        ]
                     }
                   event: fail
-                  context: slack-secrets
-                  
-
 jobs:
     build-frontend:
         docker:
@@ -124,7 +121,6 @@ jobs:
                   command: |
                       cd ~/project/frontend
                       npm audit fix --audit-level=critical --force
-            - slack-fail-notification
     scan-backend:
         docker:
             - image: circleci/node:13.8.0
@@ -149,4 +145,7 @@ workflows:
                   requires: [build-frontend]
             - scan-backend:
                   requires: [build-backend]
+            - slack-fail-notification:
+                  requires: [build-frontend,build-backend,test-frontend,test-backend,scan-backend,scan-frontend]
+                  context: slack-secrets
                   
