@@ -31,28 +31,7 @@ commands:
                       #  Add revert code here. You can find this in the Getting Started section.
                         exit 1
                       fi
-    slack-fail-notification:
-        description: Send notification to slack channel when there's a failure
-        docker:
-            - image: 'cimg/base:stable'
-        steps:
-            - slack/notify:
-                  custom: |
-                    {
-                       "blocks": [
-                         {
-                            "type": "section",
-                            "fields": [
-                                {
-                                  "type": "plain_text",
-                                  "text": "*This is a text notification*",
-                                  "emoji": true
-                                 }
-                            ]
-                         }
-                       ]
-                    }
-                  event: fail
+   
 jobs:
     build-frontend:
         docker:
@@ -133,7 +112,28 @@ jobs:
                   command: |
                       cd ~/project/backend
                       npm audit --audit-level=critical
-            - slack-fail-notification
+    slack-fail-notification:
+        description: Send notification to slack channel when there's a failure
+        docker:
+            - image: 'cimg/base:stable'
+        steps:
+            -  slack/notify:
+                  custom: |
+                      {
+                         "blocks": [
+                           {
+                              "type": "section",
+                              "fields": [
+                                  {
+                                    "type": "plain_text",
+                                    "text": "*This is a text notification*",
+                                    "emoji": true
+                                   }
+                              ]
+                           }
+                         ]
+                      }
+                  event: fail
 workflows:
     default:
         jobs:
@@ -147,5 +147,6 @@ workflows:
                   requires: [build-frontend]
             - scan-backend:
                   requires: [build-backend]
+            - slack-fail-notification:
                   context: slack-secrets
                   
