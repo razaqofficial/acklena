@@ -33,6 +33,8 @@ commands:
                       fi
     slack-fail-notification:
         description: Send notification to slack channel when there's a failure
+        docker:
+            - image: 'cimg/base:stable'
         steps:
             - slack/notify:
                   custom: |
@@ -145,7 +147,5 @@ workflows:
                   requires: [build-frontend]
             - scan-backend:
                   requires: [build-backend]
-            - slack-fail-notification:
-                  requires: [build-frontend,build-backend,test-frontend,test-backend,scan-backend,scan-frontend]
                   context: slack-secrets
                   
