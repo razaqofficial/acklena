@@ -51,6 +51,7 @@ commands:
                        ]
                     }
                   event: fail
+                  context: slack-secrets
                   
 
 jobs:
@@ -146,7 +147,6 @@ workflows:
                   requires: [build-backend]
             - scan-frontend:
                   requires: [build-frontend]
-                  context: slack-secrets
             - scan-backend:
                   requires: [build-backend]
-                  context: slack-secrets
+                  
