@@ -119,11 +119,11 @@ jobs:
                   command: |
                       cd ~/project/backend
                       npm audit --audit-level=critical
-            - slack/notify
+            - slack/notify:
                 event: fail
                 mentions: '@dev'
                 template: basic_fail_1
-            - slack/notify
+            - slack/notify:
                 event: pass
                 template: basic_success_1
 workflows:
