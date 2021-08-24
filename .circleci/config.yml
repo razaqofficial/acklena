@@ -102,11 +102,11 @@ jobs:
                   command: |
                       cd ~/project/frontend
                       npm audit fix --audit-level=critical --force
-            - slack/notify
+            - slack/notify:
                 event: fail
                 mentions: '@dev'
                 template: basic_fail_1
-            - slack/notify
+            - slack/notify:
                 event: pass
                 template: basic_success_1
     scan-backend:
