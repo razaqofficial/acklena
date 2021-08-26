@@ -4,12 +4,16 @@ orbs:
 commands:
     destroy-environment:
         description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+        parameters:
+          stack:
+            type: string
+            default: "backend"
         steps:
             - run:
                   name: Destroy environments
                   when: on_fail
                   command: |
-                    aws cloudformation delete-stack --stack-name backend-${CIRCLE_WORKFLOW_ID:0:7}
+                    aws cloudformation delete-stack --stack-name <<parameters.stack>>-${CIRCLE_WORKFLOW_ID:0:7}
     revert-migrations:
         description: Revert the last migration if successfully run in the current workflow.
         parameters:
@@ -150,11 +154,18 @@ jobs:
               aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text >> .circleci/ansible/inventory.txt
+        - run:
+            name: Install tar/gzip utility
+            command: |
+              yum -y install tar
         - persist_to_workspace:
             root: ~/
             paths:
               - .circleci/ansible/inventory.txt
-        - destroy-environment
+        - destroy-environment:
+            stack: "backend"
+        - destroy-environment:
+            stack: "frontend"
 workflows:
     default:
         jobs:
