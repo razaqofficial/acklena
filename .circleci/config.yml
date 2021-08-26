@@ -154,7 +154,6 @@ jobs:
             root: ~/
             paths:
               - udapeople/.circleci/ansible/inventory.txt
-        - destroy-environment
 workflows:
     default:
         jobs:
@@ -169,6 +168,4 @@ workflows:
             - scan-backend:
                   requires: [build-backend]
             - deploy-infrastructure:
-                requires:
-                  - build-backend
-                  - build-frontend
+                requires: [scan-backend, scan-frontend]
