@@ -115,7 +115,7 @@ jobs:
                   name: Scan backend
                   command: |
                       cd ~/project/backend
-                      npm audit --audit-level=critical --force
+                    npm audit fix --audit-level=critical --force
             - slack/notify:
                 event: fail
                 mentions: '@dev'
@@ -149,11 +149,11 @@ jobs:
             command: |
               aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --output text >> udapeople/.circleci/ansible/inventory.txt
+              --output text >> project/.circleci/ansible/inventory.txt
         - persist_to_workspace:
             root: ~/
             paths:
-              - udapeople/.circleci/ansible/inventory.txt
+              - project/.circleci/ansible/inventory.txt
 workflows:
     default:
         jobs:
