@@ -4,15 +4,12 @@ orbs:
 commands:
     destroy-environment:
         description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-        parameters:
-        # Add parameter here
         steps:
             - run:
                   name: Destroy environments
                   when: on_fail
                   command: |
-                      # Your code here
-                      exit 1
+                    aws cloudformation delete-stack --stack-name backend-${CIRCLE_WORKFLOW_ID}
     revert-migrations:
         description: Revert the last migration if successfully run in the current workflow.
         parameters:
@@ -126,6 +123,38 @@ jobs:
             - slack/notify:
                 event: pass
                 template: basic_success_1
+    deploy-infrastructure:
+      docker:
+        - image: amazon/aws-cli
+      steps:
+        - checkout
+        - run:
+            name: Ensure back-end infrastructure exists
+            command: |
+              aws cloudformation deploy \
+                --template-file .circleci/files/backend.yml \
+                #--tags project=your-tag \
+                # --stack-name backend-${CIRCLE_WORKFLOW_ID} \
+                # --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
+        - run:
+            name: Ensure front-end infrastructure exist
+            command: |
+              aws cloudformation deploy \
+                --template-file .circleci/files/frontend.yml \
+                #--tags project=your-tag \
+                # --stack-name frontend-${CIRCLE_WORKFLOW_ID} \
+                # --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
+        - run:
+            name: Add back-end ip to ansible inventory
+            command: |
+              aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text >> udapeople/.circleci/ansible/inventory.txt
+        - persist_to_workspace:
+            root: ~/
+            paths:
+              - udapeople/.circleci/ansible/inventory.txt
+        - destroy-environment
 workflows:
     default:
         jobs:
@@ -139,3 +168,5 @@ workflows:
                   requires: [build-frontend]
             - scan-backend:
                   requires: [build-backend]
+            - deploy-infrastructure:
+                requires: [build-backend, build-frontend]
