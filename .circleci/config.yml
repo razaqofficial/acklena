@@ -24,11 +24,12 @@ commands:
               # Add when this will run
               when: on_fail
               command: |
-                SUCCESS=$(curl -H "Content-Type: text/plain" -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request GET https://api.memstash.io/values/migration_result)
-                if(( $SUCCESS==1 ));
+  
+                MIGRATION_RESULT=$(curl -H "Content-Type: text/plain" -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request GET https://api.memstash.io/values/migration_result)
+                if($MIGRATION_RESULT==1 );
                 then
-                cd ~/project/backend
-                npm install
+                cd backend
+                npm i
                 npm run migrations:revert
                 fi
 jobs:
@@ -306,7 +307,7 @@ jobs:
               echo $(pwd)
               zip -r backend.zip backend/
               cp backend.zip .circleci/ansible/roles/deploy/files
-              cat project/.circleci/ansible/inventory.txt
+              cat .circleci/ansible/inventory.txt
               ansible-playbook -i  inventory.txt deploy-backend.yml
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}

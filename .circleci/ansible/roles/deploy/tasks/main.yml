@@ -9,7 +9,7 @@
     src: backend.zip
     dest: "~/web"
 
-- name: Unzip dist
+- name: Unzip backend
   shell: |
     unzip ~/web/backend.zip
    
