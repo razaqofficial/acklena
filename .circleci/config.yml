@@ -219,7 +219,6 @@ jobs:
             name: Run migrations
             command: |
               cd backend
-              npm i
               echo ENVIROMENT=$ENVIROMENT > ".env"
               echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> ".env"
               echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> ".env"
@@ -230,14 +229,18 @@ jobs:
               echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ".env"
               echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
               echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
-              if npm run migrations | grep "has been executed successfully"
-              then
-                echo "migration successful"
+              npm install
+              touch migrations_output.txt
+              npm run migrations >> migrations_output.txt
+              cat migrations_output.txt
+              if grep -q "has been executed successfully" migrations_output.txt; then
                 curl -H "Content-Type: text/plain" -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request PUT --data "1" https://api.memstash.io/values/migration_result
               else
-                echo "migration failed"
                 curl -H "Content-Type: text/plain" -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request PUT --data "0" https://api.memstash.io/values/migration_result
               fi
+        - save_cache:
+            paths: [backend/node_modules]
+            key: backend-dependencies
         - revert-migrations
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -288,7 +291,7 @@ jobs:
         - run:
             name: Deploy backend
             command: |
-              cd ~/project/backend
+              cd backend
               echo ENVIROMENT=$ENVIROMENT > ".env"
               echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> ".env"
               echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> ".env"
@@ -299,10 +302,14 @@ jobs:
               echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ".env"
               echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
               echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
-              zip -r backend.zip backend/
+              cd ../
+              pwd
+              zip -r backend.zip ../backend/
               cp backend.zip .circleci/ansible/roles/deploy/files
               cat project/.circleci/ansible/inventory.txt
               ansible-playbook -i  inventory.txt deploy-backend.yml
+        - destroy-environment:
+            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
             
     smoke-test:
       docker:
