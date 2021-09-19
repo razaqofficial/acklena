@@ -311,6 +311,7 @@ jobs:
               echo $(pwd)
               zip -r backend.zip backend/
               cp backend.zip .circleci/ansible/roles/deploy/files
+              ls .circleci/ansible/roles/deploy/files
               cd .circleci/ansible
               cat inventory.txt
               export ANSIBLE_HOST_KEY_CHECKING=False

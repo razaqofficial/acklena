@@ -14,7 +14,7 @@
   apt:
     autoremove: true
 
-- name: "install zip"
+- name: "install zip and unzip"
   become: yes
   apt:
     name: ["zip", "unzip"]

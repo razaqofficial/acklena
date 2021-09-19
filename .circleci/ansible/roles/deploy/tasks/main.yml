@@ -1,21 +1,21 @@
 ---
-- name: Create directory
-  file:
-    path: ~/web
-    state: directory
+#- name: Create directory
+#  file:
+#    path: ~/web
+#    state: directory
 
 - name: Copy backend zip to ~/web
   copy:
     src: backend.zip
-    dest: "~/web"
+    dest: /home/ubuntu
 
 - name: Unzip backend
   shell: |
-    unzip ~/web/backend.zip
+    unzip /home/ubuntu/backend.zip
    
 - name: build backend
   shell: |
-    cd ~/web/backend
+    cd /home/ubuntu/backend
     npm i
     npm run build
     pm2 start npm --name backend -- start
