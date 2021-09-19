@@ -309,10 +309,8 @@ jobs:
               echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
               cd ../
               echo $(pwd)
-              zip -r backend.zip backend/
-              cp backend.zip .circleci/ansible/roles/deploy/files
-              ls .circleci/ansible/roles/deploy/files
-              cd .circleci/ansible
+              tar -czvf backend.tar.gz ~/project/backend/*
+              cp -r backend.tar.gz ~/project/.circleci/ansible/roles/deploy/files/
               cat inventory.txt
               export ANSIBLE_HOST_KEY_CHECKING=False
               ansible-playbook -i  inventory.txt deploy-backend.yml

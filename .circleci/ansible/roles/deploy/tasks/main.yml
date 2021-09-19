@@ -4,14 +4,16 @@
 #    path: ~/web
 #    state: directory
 
-- name: Copy backend zip to /home/ubuntu
+- name: Copy backend tar to /home/ubuntu
   copy:
-    src: "files/backend.zip"
+    src: backend.tar.gz
     dest: /home/ubuntu
 
-- name: Unzip backend
+- name: Untar backend
   shell: |
-    unzip /home/ubuntu/backend.zip
+    cd /home/ubuntu
+     tar xzvf backend.tar.gz
+     ls
    
 - name: build backend
   shell: |
