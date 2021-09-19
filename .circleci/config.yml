@@ -207,8 +207,7 @@ jobs:
               echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
               echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
   
-              cd project/.circleci/ansible/
-              ansible-playbook -i inventory.txt configure-server.yml
+              ansible-playbook -i inventory.txt .circleci/ansible/configure-server.yml
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
     run-migrations:
@@ -219,7 +218,7 @@ jobs:
         - run:
             name: Run migrations
             command: |
-              cd ~/project/backend
+              cd backend
               echo ENVIROMENT=$ENVIROMENT > ".env"
               echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> ".env"
               echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> ".env"
@@ -259,7 +258,7 @@ jobs:
             command: |
               BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
               export API_URL="http://${BACKEND_URL}:3030"
-              cd ~/project/frontend
+              cd frontend
               touch .env
               echo "${API_URL}" >> .env
               cat .env
@@ -350,18 +349,18 @@ jobs:
 workflows:
     default:
         jobs:
-            - build-frontend
-            - build-backend
-            - test-frontend:
-                  requires: [build-frontend]
-            - test-backend:
-                  requires: [build-backend]
-            - scan-frontend:
-                  requires: [build-frontend]
-            - scan-backend:
-                  requires: [build-backend]
-            - deploy-infrastructure:
-                requires: [test-frontend, test-backend, scan-backend, scan-frontend]
+           #- build-frontend
+           #- build-backend
+           #- test-frontend:
+           #      requires: [build-frontend]
+           #- test-backend:
+           #      requires: [build-backend]
+           #- scan-frontend:
+           #      requires: [build-frontend]
+           #- scan-backend:
+           #      requires: [build-backend]
+            - deploy-infrastructure
+               # requires: [test-frontend, test-backend, scan-backend, scan-frontend]
             - configure-infrastructure:
                 requires: [deploy-infrastructure]
             - run-migrations:
