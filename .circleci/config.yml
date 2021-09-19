@@ -312,7 +312,7 @@ jobs:
               cp -R backend .circleci/ansible/roles/deploy/files
               cat inventory.txt
               export ANSIBLE_HOST_KEY_CHECKING=False
-              ansible-playbook -i  inventory.txt deploy-backend.yml
+              ansible-playbook -i  .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
         - revert-migrations
