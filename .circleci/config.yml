@@ -324,13 +324,8 @@ jobs:
             command: |
               export BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
               echo $BACKEND_URL
-              if curl -s --head "http://${BACKEND_URL}:3030/api/status"
-              then
-                echo "Backend api is working"
-              else
-                echo "Backend is not working"
-                exit 1
-              fi
+              curl "http://${BACKEND_URL}:3030/api/status"
+             
         - run:
             name: Frontend smoke test.
             command: |
