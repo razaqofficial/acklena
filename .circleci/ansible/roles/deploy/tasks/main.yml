@@ -4,9 +4,9 @@
 #    path: ~/web
 #    state: directory
 
-- name: Copy backend zip to ~/web
+- name: Copy backend zip to /home/ubuntu
   copy:
-    src: backend.zip
+    src: "files/backend.zip"
     dest: /home/ubuntu
 
 - name: Unzip backend
