@@ -294,6 +294,7 @@ jobs:
               pip install awscli
         - run:
             name: Deploy backend
+            no_output_timeout: 20m
             command: |
               cd backend
               echo ENVIROMENT=$ENVIROMENT > ".env"
