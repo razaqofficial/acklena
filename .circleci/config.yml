@@ -173,9 +173,9 @@ jobs:
                       --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
                       --output text` \
               https://api.memstash.io/values/backend-url
-              
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+            
     configure-infrastructure:
       docker:
         - image: python:3.7-alpine3.11
@@ -193,8 +193,9 @@ jobs:
         - run:
             name: Configure server
             command: |
+              
               echo NODE_ENV=production > "backend/.env"
-              echo ENVIRONMENT=production >>
+              echo ENVIRONMENT=production >> "backend/.env"
               echo VERSION=1 >> "backend/.env"
               echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> "backend/.env"
               echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
