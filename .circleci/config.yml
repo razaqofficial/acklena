@@ -24,9 +24,7 @@ commands:
               # Add when this will run
               when: on_fail
               command: |
-  
-                MIGRATION_RESULT=$(curl -H "Content-Type: text/plain" -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request GET https://api.memstash.io/values/migration_result)
-                if($MIGRATION_RESULT==1 );
+                if curl -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request GET https://api.memstash.io/values/migration_result == "1";
                 then
                 cd backend
                 npm i
@@ -308,7 +306,7 @@ jobs:
               zip -r backend.zip backend/
               cp backend.zip .circleci/ansible/roles/deploy/files
               cat .circleci/ansible/inventory.txt
-              ansible-playbook -i  inventory.txt deploy-backend.yml
+              ansible-playbook -i  inventory.txt .circleci/ansible/deploy-backend.yml
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
         - revert-migrations
@@ -328,7 +326,6 @@ jobs:
             command: |
               export BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
               echo $BACKEND_URL
-             
         - run:
             name: Backend smoke test.
             command: |
