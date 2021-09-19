@@ -1,17 +1,20 @@
----
-#- name: Create directory
-#  file:
-#    path: ~/web
-#    state: directory
-
-- name: Copy backend /home/ubuntu
+- name: Copy backend dist files web server
   copy:
-    src: backend/
-    dest: /home/ubuntu/backend/
-   
-- name: build backend
+    src: backend.zip
+    dest: /home/ubuntu
+
+- name: Unzip backend files
+  shell: |
+    unzip /home/ubuntu/backend.zip
+- name: Install Node
   shell: |
     cd /home/ubuntu/backend
-    npm i
+    npm install
+- name: Build Node
+  shell: |
+    cd /home/ubuntu/backend
     npm run build
+- name: Start PM2
+  shell: |
+    cd /home/ubuntu/backend
     pm2 start npm --name backend -- start
