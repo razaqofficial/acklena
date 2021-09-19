@@ -24,9 +24,16 @@ commands:
               # Add when this will run
               when: on_fail
               command: |
-                ~/project/backend
+                cd ~/project/backend
                 npm i
-                npm run migrations:revert
+                #  Add revert code here. You can find this in the Getting Started section.
+                if curl -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request GET https://api.memstash.io/values/migration_result == "1";
+                then
+                  # revert the migrations
+                  cd backend
+                  npm install
+                  npm run migrations:revert
+                fi
                 
 jobs:
     build-frontend:
@@ -303,8 +310,9 @@ jobs:
               echo $(pwd)
               zip -r backend.zip backend/
               cp backend.zip .circleci/ansible/roles/deploy/files
-              cat .circleci/ansible/inventory.txt
-              ansible-playbook -i  inventory.txt .circleci/ansible/deploy-backend.yml
+              cd .circleci/ansible
+              cat inventory.txt
+              ansible-playbook -i  inventory.txt deploy-backend.yml
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
         - revert-migrations
