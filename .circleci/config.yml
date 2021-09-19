@@ -20,12 +20,11 @@ commands:
         description: Revert the last migration if successfully run in the current workflow.
         steps:
           - run:
+              no_output_timeout: 20m
               name: Revert migrations
               # Add when this will run
               when: on_fail
               command: |
-                if curl -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request GET https://api.memstash.io/values/migration_result == "1";
-                then
                 cd backend
                 npm i
                 npm run migrations:revert
@@ -268,7 +267,7 @@ jobs:
               npm run build:prod
               ls -a
               cd dist
-              aws s3 sync . s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+              aws s3 sync . s3://s3-bucket-udapeople-${CIRCLE_WORKFLOW_ID:0:7}
         - revert-migrations
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
