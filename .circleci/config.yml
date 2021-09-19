@@ -267,9 +267,9 @@ jobs:
               ls -a
               cd dist
               aws s3 sync . s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
-        #- revert-migrations
-       # - destroy-environment:
-          #  workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+        - revert-migrations
+        - destroy-environment:
+            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
             
     deploy-backend:
       docker:
@@ -320,13 +320,10 @@ jobs:
               apk add curl
               pip install awscli
         - run:
-            name: Get backend url
+            name: Backend smoke test.
             command: |
               export BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
               echo $BACKEND_URL
-        - run:
-            name: Backend smoke test.
-            command: |
               if curl -s --head "http://${BACKEND_URL}:3030/api/status"
               then
                 echo "Backend api is working"
@@ -337,7 +334,7 @@ jobs:
         - run:
             name: Frontend smoke test.
             command: |
-              export FRONTEND_URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com"
+              export FRONTEND_URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com/#/employees"
               if curl -s ${FRONTEND_URL} | grep "Welcome"
               then
                 echo "Front-end is working"
