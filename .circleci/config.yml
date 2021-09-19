@@ -161,7 +161,7 @@ jobs:
         - persist_to_workspace:
             root: ~/
             paths:
-              - .circleci/ansible/inventory.txt
+              - project/.circleci/ansible/inventory.txt
         - run:
             name: Save backend url
             command: |
@@ -206,7 +206,7 @@ jobs:
               echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
               echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
   
-              cd .circleci/ansible/
+              cd project/.circleci/ansible/
               ansible-playbook -i inventory.txt configure-server.yml
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -301,7 +301,7 @@ jobs:
               echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
               zip -r backend.zip backend/
               cp backend.zip .circleci/ansible/roles/deploy/files
-              cat .circleci/ansible/inventory.txt
+              cat project/.circleci/ansible/inventory.txt
               ansible-playbook -i  inventory.txt deploy-backend.yml
             
     smoke-test:
