@@ -170,7 +170,7 @@ jobs:
               --request PUT \
               --data `aws ec2 describe-instances \
                       --query 'Reservations[*].Instances[*].PublicDnsName' \
-                      --filter 'Name=Tag:project, Values=udapeople' \
+                      --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
                       --output text` \
               https://api.memstash.io/values/backend-url
               
@@ -256,7 +256,7 @@ jobs:
         - run:
             name: Get backend url
             command: |
-              BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:project,Values=udapeople" --output text)
+              BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
               export API_URL="http://${BACKEND_URL}:3030"
               cd ~/project/frontend
               touch .env
@@ -317,7 +317,7 @@ jobs:
         - run:
             name: Get backend url
             command: |
-              export BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:project,Values=udapeople" --output text)
+              export BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
               echo $BACKEND_URL
              
         - run:
