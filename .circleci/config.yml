@@ -217,6 +217,7 @@ jobs:
         - checkout
         - run:
             name: Run migrations
+            no_output_timeout: 20m
             command: |
               cd backend
               echo ENVIROMENT=$ENVIROMENT > ".env"
@@ -242,8 +243,7 @@ jobs:
             paths: [backend/node_modules]
             key: backend-dependencies
         - revert-migrations
-        - destroy-environment:
-            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+       
     deploy-frontend:
       docker:
         - image: amazon/aws-cli
