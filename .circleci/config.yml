@@ -244,109 +244,110 @@ jobs:
         - revert-migrations
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
-        deploy-frontend:
-          docker:
-            - image: amazon/aws-cli
-          steps:
-            - checkout
-            - run:
-                name: Install dependencies
-                command: |
-                  curl -sL https://rpm.nodesource.com/setup_lts.x | bash -
-                  yum -y install tar gzip
-                  yum -y install nodejs
-                
-            - run:
-                name: Get backend url
-                command: |
-                  BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:project,Values=udapeople" --output text)
-                  export API_URL="http://${BACKEND_URL}:3030"
-                  cd ~/project/frontend
-                  touch .env
-                  echo "${API_URL}" >> .env
-                  cat .env
-                  npm i
-                  npm run build:prod
-                  ls -a
-                  cd dist
-                  aws s3 sync . s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-            - revert-migrations
-            - destroy-environment:
-                workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
-        deploy-backend:
-          docker:
-            - image: python:3.7-alpine3.11
-          steps:
-            - checkout
-            - add_ssh_keys:
-                fingerprints: [ "2f:71:10:4c:12:74:7e:a9:dc:3f:08:77:bd:48:7a:f5" ]
-            - attach_workspace:
-                at: ~/
-            - run:
-                name: Install dependencies
-                command: |
-                  apk add --update ansible curl tar gzip zip unzip openssh-client nodejs npm
-                  pip install awscli
-            - run:
-                name: Deploy backend
-                command: |
-                  cd ~/project/backend
-                  echo ENVIROMENT=$ENVIROMENT > ".env"
-                  echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> ".env"
-                  echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> ".env"
-                  echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> ".env"
-                  echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> ".env"
-                  echo TYPEORM_HOST=$TYPEORM_HOST >> ".env"
-                  echo TYPEORM_PORT=$TYPEORM_PORT >> ".env"
-                  echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ".env"
-                  echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
-                  echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
-                  zip -r backend.zip backend/
-                  cp backend.zip .circleci/ansible/roles/deploy/files
-                  cat .circleci/ansible/inventory.txt
-                  ansible-playbook -i  inventory.txt deploy-backend.yml
-              
-        smoke-test:
-          docker:
-            - image: python:3.7-alpine3.11
-          steps:
-            - checkout
-            - run:
-                name: Install dependencies
-                command: |
-                  apk add curl
-                  pip install awscli
-            - run:
-                name: Get backend url
-                command: |
-                  export BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:project,Values=udapeople" --output text)
-                  echo $BACKEND_URL
-                 
-            - run:
-                name: Backend smoke test.
-                command: |
-                  if curl -s --head "http://${BACKEND_URL}:3030/api/status"
-                  then
-                    echo "Backend api is working"
-                  else
-                    echo "Backend is not working"
-                    exit 1
-                  fi
-            - run:
-                name: Frontend smoke test.
-                command: |
-                  export FRONTEND_URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com"
-                  if curl -s ${FRONTEND_URL} | grep "Welcome"
-                  then
-                    echo "Front-end is working"
-                    exit 0
-                  else
-                    echo "Frontend is not working"
-                    exit 1
-                  fi
-            - destroy-environment:
-                workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
-            - revert-migrations
+    deploy-frontend:
+      docker:
+        - image: amazon/aws-cli
+      steps:
+        - checkout
+        - run:
+            name: Install dependencies
+            command: |
+              curl -sL https://rpm.nodesource.com/setup_lts.x | bash -
+              yum -y install tar gzip
+              yum -y install nodejs
+            
+        - run:
+            name: Get backend url
+            command: |
+              BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:project,Values=udapeople" --output text)
+              export API_URL="http://${BACKEND_URL}:3030"
+              cd ~/project/frontend
+              touch .env
+              echo "${API_URL}" >> .env
+              cat .env
+              npm i
+              npm run build:prod
+              ls -a
+              cd dist
+              aws s3 sync . s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+        - revert-migrations
+        - destroy-environment:
+            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+            
+    deploy-backend:
+      docker:
+        - image: python:3.7-alpine3.11
+      steps:
+        - checkout
+        - add_ssh_keys:
+            fingerprints: [ "2f:71:10:4c:12:74:7e:a9:dc:3f:08:77:bd:48:7a:f5" ]
+        - attach_workspace:
+            at: ~/
+        - run:
+            name: Install dependencies
+            command: |
+              apk add --update ansible curl tar gzip zip unzip openssh-client nodejs npm
+              pip install awscli
+        - run:
+            name: Deploy backend
+            command: |
+              cd ~/project/backend
+              echo ENVIROMENT=$ENVIROMENT > ".env"
+              echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> ".env"
+              echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> ".env"
+              echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> ".env"
+              echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> ".env"
+              echo TYPEORM_HOST=$TYPEORM_HOST >> ".env"
+              echo TYPEORM_PORT=$TYPEORM_PORT >> ".env"
+              echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ".env"
+              echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
+              echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
+              zip -r backend.zip backend/
+              cp backend.zip .circleci/ansible/roles/deploy/files
+              cat .circleci/ansible/inventory.txt
+              ansible-playbook -i  inventory.txt deploy-backend.yml
+            
+    smoke-test:
+      docker:
+        - image: python:3.7-alpine3.11
+      steps:
+        - checkout
+        - run:
+            name: Install dependencies
+            command: |
+              apk add curl
+              pip install awscli
+        - run:
+            name: Get backend url
+            command: |
+              export BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:project,Values=udapeople" --output text)
+              echo $BACKEND_URL
+             
+        - run:
+            name: Backend smoke test.
+            command: |
+              if curl -s --head "http://${BACKEND_URL}:3030/api/status"
+              then
+                echo "Backend api is working"
+              else
+                echo "Backend is not working"
+                exit 1
+              fi
+        - run:
+            name: Frontend smoke test.
+            command: |
+              export FRONTEND_URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com"
+              if curl -s ${FRONTEND_URL} | grep "Welcome"
+              then
+                echo "Front-end is working"
+                exit 0
+              else
+                echo "Frontend is not working"
+                exit 1
+              fi
+        - destroy-environment:
+            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+        - revert-migrations
                   
 workflows:
     default:
