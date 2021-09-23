@@ -315,7 +315,7 @@ jobs:
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
         - revert-migrations
-            
+        
     smoke-test:
       docker:
         - image: python:3.7-alpine3.11
@@ -348,7 +348,7 @@ jobs:
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
         - revert-migrations
-                  
+        
 workflows:
     default:
         jobs:
@@ -370,7 +370,7 @@ workflows:
                 requires: [configure-infrastructure]
            # - deploy-frontend:
             #    requires: [run-migrations]
-           - deploy-backend:
+            - deploy-backend:
                 requires: [run-migrations]
             - smoke-test:
                 requires: [deploy-backend]
