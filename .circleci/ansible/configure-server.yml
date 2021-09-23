@@ -25,7 +25,7 @@
   
     - name: "install python for Ansible."
       become: true
-      raw: apt -y update && apt install -y python2.7
+      raw: test -e /usr/bin/python2 || (apt -y update && apt install -y python2)
       changed_when: false
 
   roles:

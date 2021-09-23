@@ -13,7 +13,7 @@
   become: yes
   apt:
     autoremove: true
-  
+
 - name: "install zip and unzip"
   become: yes
   apt:
@@ -21,11 +21,30 @@
     state: latest
     update_cache: yes
 
-- name: "fixed broken package"
-  become: yes
-  shell: |
-    sudo add-apt-repository ppa:deadsnakes/ppa
-    sudo apt-get install nodejs
+- name: "Add nodejs apt key"
+  become: true
+  apt_key:
+    url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+    state: present
+
+- name: "Add nodejs 13.x ppa for apt repo"
+  become: true
+  apt_repository:
+    repo: deb https://deb.nodesource.com/node_13.x bionic main
+    update_cache: yes
+
+- name: "Install nodejs"
+  become: true
+  apt:
+    update_cache: yes
+    name: nodejs
+    state: present
+
+- name: "Install NPM-distributed command-line tools"
+  become: true
+  npm:
+    global: yes
+    name: "{{ item }}"
   
 - name: "install pm2"
   become: true
