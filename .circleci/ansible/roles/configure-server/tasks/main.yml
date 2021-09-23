@@ -40,7 +40,7 @@
     name: nodejs
     state: present
 
-name: "Install NPM-distributed command-line tools"
+- name: "Install NPM-distributed command-line tools"
   become: true
   npm:
     global: yes
