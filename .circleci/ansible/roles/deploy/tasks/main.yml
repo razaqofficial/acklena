@@ -11,6 +11,7 @@
     dest: ~/web
     
 - name: Install Node and Build
+  become: true
   shell: |
     cd ~/web/backend
     npm install -g npm@latest
@@ -21,3 +22,4 @@
   shell: |
     cd /home/ubuntu/backend
     pm2 start npm --name backend -- start
+    pm2 ls
