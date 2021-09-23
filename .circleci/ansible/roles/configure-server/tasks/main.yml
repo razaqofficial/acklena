@@ -21,29 +21,13 @@
     state: latest
     update_cache: yes
 
-- name: "Add nodejs apt key"
-  become: true
-  apt_key:
-    url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
-    state: present
-
-- name: "Add nodejs 13.x ppa for apt repo"
-  become: true
-  apt_repository:
-    repo: deb https://deb.nodesource.com/node_13.x focal main
-    update_cache: yes
-
 - name: "fixed broken package"
   become: yes
   shell: |
-    apt install nodejs
-    apt install beef-xs
-    
-- name: "Install NPM-distributed command-line tools"
-  become: true
-  npm:
-    global: yes
-    name: "{{ item }}"
+    sudo add-apt-repository ppa:deadsnakes/ppa
+    sudo apt-get update
+    sudo apt-get install python2.7
+    sudo apt-get install nodejs
   
 - name: "install pm2"
   become: true
