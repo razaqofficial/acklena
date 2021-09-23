@@ -312,9 +312,9 @@ jobs:
               cat .circleci/ansible/inventory.txt
               export ANSIBLE_HOST_KEY_CHECKING=False
               ansible-playbook -i  .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
-        - destroy-environment:
-            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
-        - revert-migrations
+        #- destroy-environment:
+        #    workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+        # - revert-migrations
         
     smoke-test:
       docker:
@@ -345,9 +345,9 @@ jobs:
                 echo "Frontend is not working"
                 exit 1
               fi
-        - destroy-environment:
-            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
-        - revert-migrations
+       # - destroy-environment:
+       #    workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+       # - revert-migrations
         
 workflows:
     default:
