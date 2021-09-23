@@ -1,19 +1,22 @@
-- name: Copy backend dist files web server
-  copy:
-    src: backend.zip
-    dest: /home/ubuntu
+- name: "creat web directory"
+  become_user: ubuntu
+  become: yes
+  file:
+    path: ~/web
+    state: directory
 
-- name: Unzip backend files
+- name: unzip backend to the web directory
+  unarchive:
+    src: ~/project/backend.zip
+    dest: ~/web
+    
+- name: Install Node and Build
   shell: |
-    unzip /home/ubuntu/backend.zip
-- name: Install Node
-  shell: |
-    cd /home/ubuntu/backend
-    npm install
-- name: Build Node
-  shell: |
-    cd /home/ubuntu/backend
+    cd ~/web/backend
+    ls
+    npm i
     npm run build
+    
 - name: Start PM2
   shell: |
     cd /home/ubuntu/backend

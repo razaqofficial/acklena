@@ -143,14 +143,14 @@ jobs:
                 --tags project=udapeople \
                 --stack-name backend-${CIRCLE_WORKFLOW_ID:0:7} \
                 --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
-        - run:
-            name: Ensure front-end infrastructure exist
-            command: |
-              aws cloudformation deploy \
-                --template-file .circleci/files/frontend.yml \
-                --tags project=udapeople \
-                --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:7} \
-                --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
+       #- run:
+       #    name: Ensure front-end infrastructure exist
+       #    command: |
+       #      aws cloudformation deploy \
+       #        --template-file .circleci/files/frontend.yml \
+       #        --tags project=udapeople \
+       #        --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:7} \
+       #        --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
         - run:
             name: Add back-end ip to ansible inventory
             command: |
@@ -308,16 +308,13 @@ jobs:
               echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
               echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
               cd ../
-              echo $(pwd)
-              echo $(ls)
-              zip -r backend.zip ./backend
-              cp backend.zip /root/project/.circleci/ansible/roles/deploy/files
+              zip -r backend.zip backend/
               cat .circleci/ansible/inventory.txt
               export ANSIBLE_HOST_KEY_CHECKING=False
               ansible-playbook -i  .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
-        #- destroy-environment:
-        #    workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
-       # - revert-migrations
+        - destroy-environment:
+            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+        - revert-migrations
             
     smoke-test:
       docker:
@@ -365,15 +362,15 @@ workflows:
            #      requires: [build-frontend]
            #- scan-backend:
            #      requires: [build-backend]
-           # - deploy-infrastructure
+            - deploy-infrastructure
                # requires: [test-frontend, test-backend, scan-backend, scan-frontend]
-           # - configure-infrastructure:
-           #     requires: [deploy-infrastructure]
-           # - run-migrations:
-           #     requires: [configure-infrastructure]
+            - configure-infrastructure:
+                requires: [deploy-infrastructure]
+            - run-migrations:
+                requires: [configure-infrastructure]
            # - deploy-frontend:
-           #     requires: [run-migrations]
-            - deploy-backend
-               # requires: [run-migrations]
-           # - smoke-test:
-           #     requires: [deploy-frontend, deploy-backend]
+            #    requires: [run-migrations]
+           - deploy-backend:
+                requires: [run-migrations]
+            - smoke-test:
+                requires: [deploy-backend]
