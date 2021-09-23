@@ -1,36 +1,37 @@
-- name: Update packages
+---
+- name: "update apt packages"
+  become: yes
+  apt:
+    update_cache: yes
+    
+- name: "upgrade packages"
   become: yes
   apt:
     update_cache: yes
 
-- name: Upgrade packages
-  become: yes
-  apt:
-    upgrade: safe
-
-- name: Add Node.js apt key
+- name: "remove dependencies that are no longer required"
   become: true
-  apt_key:
-    url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
-    state: present
+  apt:
+    autoremove: true
 
-- name: Add Node.js 13.x ppa for apt repo
-  become: true
-  apt_repository:
-    repo: deb https://deb.nodesource.com/node_13.x focal main
-    update_cache: yes
-
-- name: Install Node.js
+- name: "install zip and unzip"
   become: yes
   apt:
+    name: ["zip", "unzip"]
+    state: latest
     update_cache: yes
-    name: nodejs
-    state: present
 
-- name: Install pm2
-  become: yes
+- name: "install dependencies."
+  become: true
+  apt:
+    name: ["nodejs", "npm"]
+    state: latest
+    update_cache: yes
+
+- name: "install pm2"
+  become: true
   npm:
     name: pm2
     global: yes
-    production: true
+    production: yes
     state: present

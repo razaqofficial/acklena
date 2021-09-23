@@ -13,7 +13,7 @@
 - name: Install Node and Build
   shell: |
     cd ~/web/backend
-    ls
+    npm install -g npm@latest
     npm i
     npm run build
     
