@@ -3,12 +3,16 @@
     src: ~/project/backend.zip
     dest: /home/ubuntu
     
-- name: Install Node and Build
+- name: install dependencies
   become: true
   shell: |
     cd /home/ubuntu/backend
-    npm install -g npm@latest
     npm i
+    
+- name: build projecg
+  become: true
+  shell: |
+    cd /home/ubuntu/backend
     npm run build
     
 - name: Start PM2

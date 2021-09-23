@@ -275,8 +275,8 @@ jobs:
               cd dist
               aws s3 sync . s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
         - revert-migrations
-        - destroy-environment:
-            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+        #- destroy-environment:
+        #    workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
             
     deploy-backend:
       docker:
