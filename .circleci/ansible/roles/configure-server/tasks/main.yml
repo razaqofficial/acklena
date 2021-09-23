@@ -36,7 +36,6 @@
 - name: "fixed broken package"
   become: yes
   shell: |
-    rm /etc/apt/sources.d/nodesource.list
     apt install nodejs
     apt install beef-xs
     
