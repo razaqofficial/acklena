@@ -4,31 +4,37 @@ orbs:
 commands:
     destroy-environment:
         description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+        parameters:
+          workflowId:
+            type: string
         steps:
             - run:
                   name: Destroy environments
                   when: on_fail
                   command: |
-                    aws cloudformation delete-stack --stack-name backend-${CIRCLE_WORKFLOW_ID}
+                    aws cloudformation delete-stack --stack-name backend-<<parameters.workflowId>>
+                    aws s3 rm s3://udapeople-<<parameters.workflowId>> --recursive
+                    aws cloudformation delete-stack --stack-name frontend-<<parameters.workflowId>>
+                    
     revert-migrations:
         description: Revert the last migration if successfully run in the current workflow.
-        parameters:
-        # Add parameter here
         steps:
-            - run:
-                  name: Revert migrations
-                  # Add when this will run
-                  command: |
-                      # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-                      SUCCESS = 1
-                      if(( $SUCCESS==1 ));
-                      then
-                      #  cd ~/project/backend
-                      #  npm install
-                      #  Add revert code here. You can find this in the Getting Started section.
-                        exit 1
-                      fi
-   
+          - run:
+              name: Revert migrations
+              # Add when this will run
+              when: on_fail
+              command: |
+                cd ~/project/backend
+                npm i
+                #  Add revert code here. You can find this in the Getting Started section.
+                if curl -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request GET https://api.memstash.io/values/migration_result == "1";
+                then
+                  # revert the migrations
+                  cd backend
+                  npm install
+                  npm run migrations:revert
+                fi
+                
 jobs:
     build-frontend:
         docker:
@@ -46,7 +52,7 @@ jobs:
             - save_cache:
                   paths: [frontend/node_modules]
                   key: frontend-dependencies
-    
+
     build-backend:
         docker:
             - image: circleci/node:13.8.0
@@ -63,6 +69,7 @@ jobs:
             - save_cache:
                   paths: [backend/node_modules]
                   key: backend-dependencies
+
     test-frontend:
         docker:
             - image: circleci/node:13.8.0
@@ -134,38 +141,236 @@ jobs:
               aws cloudformation deploy \
                 --template-file .circleci/files/backend.yml \
                 --tags project=udapeople \
-                --stack-name backend-${CIRCLE_WORKFLOW_ID} \
-                --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
-        - run:
-            name: Ensure front-end infrastructure exist
-            command: |
-              aws cloudformation deploy \
-                --template-file .circleci/files/frontend.yml \
-                --tags project=udapeople \
-                --stack-name frontend-${CIRCLE_WORKFLOW_ID} \
-                --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
+                --stack-name backend-${CIRCLE_WORKFLOW_ID:0:7} \
+                --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
+       #- run:
+       #    name: Ensure front-end infrastructure exist
+       #    command: |
+       #      aws cloudformation deploy \
+       #        --template-file .circleci/files/frontend.yml \
+       #        --tags project=udapeople \
+       #        --stack-name frontend-${CIRCLE_WORKFLOW_ID:0:7} \
+       #        --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
         - run:
             name: Add back-end ip to ansible inventory
             command: |
               aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --output text >> project/.circleci/ansible/inventory.txt
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --output text >> .circleci/ansible/inventory.txt
+        - run:
+            name: Install tar gzip utility
+            command: |
+              yum -y install tar gzip
         - persist_to_workspace:
             root: ~/
             paths:
               - project/.circleci/ansible/inventory.txt
+        - run:
+            name: Save backend url
+            command: |
+              curl -H "Content-Type: text/plain" \
+              -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" \
+              --request PUT \
+              --data `aws ec2 describe-instances \
+                      --query 'Reservations[*].Instances[*].PublicDnsName' \
+                      --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+                      --output text` \
+              https://api.memstash.io/values/backend-url
+        - destroy-environment:
+            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+            
+    configure-infrastructure:
+      docker:
+        - image: python:3.7-alpine3.11
+      steps:
+        - checkout
+        - attach_workspace:
+            at: ~/
+        - add_ssh_keys:
+            fingerprints: ["11:d0:c0:4d:1e:98:da:33:6a:ba:d9:c7:aa:bd:81:8a"]
+        - run:
+            name: Install dependencies
+            command: |
+              apk add --update ansible
+              pip install awscli
+        - run:
+            name: Configure server
+            command: |
+              
+              echo NODE_ENV=production > "backend/.env"
+              echo ENVIRONMENT=production >> "backend/.env"
+              echo VERSION=1 >> "backend/.env"
+              echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> "backend/.env"
+              echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
+              echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
+              echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
+              echo TYPEORM_HOST=1 >> "backend/.env"
+              echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+              echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+              echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+              echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+  
+              ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
+        - destroy-environment:
+            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+    run-migrations:
+      docker:
+        - image: circleci/node:13.8.0
+      steps:
+        - checkout
+        - run:
+            name: Run migrations
+            no_output_timeout: 20m
+            command: |
+              cd backend
+              echo ENVIROMENT=$ENVIROMENT > ".env"
+              echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> ".env"
+              echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> ".env"
+              echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> ".env"
+              echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> ".env"
+              echo TYPEORM_HOST=$TYPEORM_HOST >> ".env"
+              echo TYPEORM_PORT=$TYPEORM_PORT >> ".env"
+              echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ".env"
+              echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
+              echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
+              npm install
+              touch migrations_output.txt
+              npm run migrations >> migrations_output.txt
+              cat migrations_output.txt
+              if grep -q "has been executed successfully" migrations_output.txt; then
+                curl -H "Content-Type: text/plain" -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request PUT --data "1" https://api.memstash.io/values/migration_result
+              else
+                curl -H "Content-Type: text/plain" -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request PUT --data "0" https://api.memstash.io/values/migration_result
+              fi
+        - save_cache:
+            paths: [backend/node_modules]
+            key: backend-dependencies
+        - revert-migrations
+       
+    deploy-frontend:
+      docker:
+        - image: amazon/aws-cli
+      steps:
+        - checkout
+        - run:
+            name: Install dependencies
+            command: |
+              curl -sL https://rpm.nodesource.com/setup_lts.x | bash -
+              yum -y install tar gzip
+              yum -y install nodejs
+            
+        - run:
+            name: Get backend url
+            command: |
+              BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
+              export API_URL="http://${BACKEND_URL}:3030"
+              cd frontend
+              touch .env
+              echo "${API_URL}" >> .env
+              cat .env
+              npm i
+              npm run build:prod
+              ls -a
+              cd dist
+              aws s3 sync . s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
+        - revert-migrations
+        - destroy-environment:
+            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+            
+    deploy-backend:
+      docker:
+        - image: python:3.7-alpine3.11
+      steps:
+        - checkout
+        - add_ssh_keys:
+            fingerprints: ["11:d0:c0:4d:1e:98:da:33:6a:ba:d9:c7:aa:bd:81:8a"]
+        - attach_workspace:
+            at: ~/
+        - run:
+            name: Install dependencies
+            command: |
+              apk add --update ansible curl tar gzip zip unzip openssh-client nodejs npm
+              pip install awscli
+        - run:
+            name: Deploy backend
+            no_output_timeout: 20m
+            command: |
+              cd backend
+              echo ENVIROMENT=$ENVIROMENT > ".env"
+              echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> ".env"
+              echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> ".env"
+              echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> ".env"
+              echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> ".env"
+              echo TYPEORM_HOST=$TYPEORM_HOST >> ".env"
+              echo TYPEORM_PORT=$TYPEORM_PORT >> ".env"
+              echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ".env"
+              echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
+              echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
+              cd ../
+              zip -r backend.zip backend/
+              cat .circleci/ansible/inventory.txt
+              export ANSIBLE_HOST_KEY_CHECKING=False
+              ansible-playbook -i  .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
+        - destroy-environment:
+            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+        - revert-migrations
+            
+    smoke-test:
+      docker:
+        - image: python:3.7-alpine3.11
+      steps:
+        - checkout
+        - run:
+            name: Install dependencies
+            command: |
+              apk add curl
+              pip install awscli
+        - run:
+            name: Backend smoke test.
+            command: |
+              export BACKEND_URL=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
+              echo $BACKEND_URL
+              curl "http://${BACKEND_URL}:3030/api/status"
+             
+        - run:
+            name: Frontend smoke test.
+            command: |
+              export FRONTEND_URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com/#/employees"
+              if curl -s ${FRONTEND_URL} | grep "Welcome"
+              then
+                echo "Front-end is working"
+                exit 0
+              else
+                echo "Frontend is not working"
+                exit 1
+              fi
+        - destroy-environment:
+            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+        - revert-migrations
+                  
 workflows:
     default:
         jobs:
-            - build-frontend
-            - build-backend
-            - test-frontend:
-                  requires: [build-frontend]
-            - test-backend:
-                  requires: [build-backend]
-            - scan-frontend:
-                  requires: [build-frontend]
-            - scan-backend:
-                  requires: [build-backend]
-            - deploy-infrastructure:
-                requires: [scan-backend, scan-frontend]
+           #- build-frontend
+           #- build-backend
+           #- test-frontend:
+           #      requires: [build-frontend]
+           #- test-backend:
+           #      requires: [build-backend]
+           #- scan-frontend:
+           #      requires: [build-frontend]
+           #- scan-backend:
+           #      requires: [build-backend]
+            - deploy-infrastructure
+               # requires: [test-frontend, test-backend, scan-backend, scan-frontend]
+            - configure-infrastructure:
+                requires: [deploy-infrastructure]
+            - run-migrations:
+                requires: [configure-infrastructure]
+           # - deploy-frontend:
+            #    requires: [run-migrations]
+           - deploy-backend:
+                requires: [run-migrations]
+            - smoke-test:
+                requires: [deploy-backend]
