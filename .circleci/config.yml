@@ -210,7 +210,7 @@ jobs:
               echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
               echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
               echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
-  
+            export ANSIBLE_HOST_KEY_CHECKING=False
               ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
