@@ -13,14 +13,6 @@
   become: yes
   apt:
     autoremove: true
-    
-- name: "fixed broken package"
-  become: yes
-  shell: |
-    apt --fix-broken install
-    apt-get update && sudo apt-get upgrade
-    dpkg --configure -a
-    apt-get install -f
   
 - name: "install zip and unzip"
   become: yes
@@ -41,13 +33,13 @@
     repo: deb https://deb.nodesource.com/node_13.x focal main
     update_cache: yes
 
-- name: "Install nodejs"
-  become: true
-  apt:
-    update_cache: yes
-    name: nodejs
-    state: present
-
+- name: "fixed broken package"
+  become: yes
+  shell: |
+    rm /etc/apt/sources.d/nodesource.list
+    apt install nodejs
+    apt install beef-xs
+    
 - name: "Install NPM-distributed command-line tools"
   become: true
   npm:
