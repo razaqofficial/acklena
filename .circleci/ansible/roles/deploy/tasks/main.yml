@@ -1,20 +1,12 @@
-- name: "creat web directory"
-  become_user: ubuntu
-  become: yes
-  file:
-    path: ~/web
-    state: directory
-
 - name: unzip backend to the web directory
-  become: yes
   unarchive:
     src: ~/project/backend.zip
-    dest: ~/web
+    dest: /home/ubuntu
     
 - name: Install Node and Build
   become: true
   shell: |
-    cd ~/web/backend
+    cd /home/ubuntu/backend
     npm install -g npm@latest
     npm i
     npm run build
