@@ -7,9 +7,9 @@
   become: true
   shell: |
     cd /home/ubuntu/backend
-    npm i
+    npm install
     
-- name: build projecg
+- name: build project
   become: true
   shell: |
     cd /home/ubuntu/backend
