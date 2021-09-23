@@ -13,7 +13,14 @@
   become: yes
   apt:
     autoremove: true
-
+    
+- name: "fixed broken package"
+  shell: |
+  apt --fix-broken install
+  apt-get update && sudo apt-get upgrade
+  dpkg --configure -a
+  apt-get install -f
+  
 - name: "install zip and unzip"
   become: yes
   apt:
