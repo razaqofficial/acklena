@@ -10,13 +10,15 @@
     
 - name: build project
   become: true
+  args:
+    chdir: /home/ubuntu/backend
   shell: |
-    cd /home/ubuntu/backend
     npm run build
     
 - name: Start PM2
   become: true
+  args:
+    chdir: /home/ubuntu/backend
   shell: |
-    cd /home/ubuntu/backend
     pm2 start npm --name backend -- start
     pm2 ls
