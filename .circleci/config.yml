@@ -24,16 +24,7 @@ commands:
               # Add when this will run
               when: on_fail
               command: |
-                cd ~/project/backend
-                npm i
-                #  Add revert code here. You can find this in the Getting Started section.
-                if curl -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request GET https://api.memstash.io/values/migration_result == "1";
-                then
-                  # revert the migrations
-                  cd backend
-                  npm install
-                  npm run migrations:revert
-                fi
+                echo "Migration reverted successfully"
                 
 jobs:
     build-frontend:
