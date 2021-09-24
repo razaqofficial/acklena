@@ -7,11 +7,11 @@
   become: true
   shell: |
     cd /home/ubuntu/backend
-    npm install
+    npm i
     npm run build
 
 - name: start pm2
   become: true
   shell: |
     cd /home/ubuntu/backend
-    start npm --name backend -- run start
+    pm2 start npm --name backend -- run start
