@@ -298,6 +298,7 @@ jobs:
             command: |
               cd backend
               echo ENVIROMENT=$ENVIROMENT > ".env"
+              echo NODE_ENV=$ENVIROMENT > ".env"
               echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> ".env"
               echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> ".env"
               echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> ".env"
