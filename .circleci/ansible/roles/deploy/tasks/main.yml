@@ -2,30 +2,16 @@
   unarchive:
     src: ~/project/backend.zip
     dest: /home/ubuntu
-    
-- name: change ownership
-  become: true
-  shell: chown ubuntu:ubuntu  /home/ubuntu/backend/ -R
 
 - name: run build script
-  shell: bash  /home/ubuntu/backend/build.sh
-    
-#- name: install dependencies
-#  command: npm install
-#  args:
-#    chdir: /home/ubuntu/backend
-#
-#- name: build project
-#  become: true
-#  args:
-#    chdir: /home/ubuntu/backend
-#  shell: |
-#    npm run build
-#
-#- name: Start PM2
-#  become: true
-#  args:
-#    chdir: /home/ubuntu/backend
-#  shell: |
-#    pm2 start npm --name backend -- start
-#    pm2 ls
+  become: true
+  shell: |
+    cd /home/ubuntu/backend
+    npm install
+    npm run build
+
+- name: start pm2
+  become: true
+  shell: |
+    cd /home/ubuntu/backend
+    start npm --name backend -- run start
