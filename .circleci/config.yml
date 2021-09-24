@@ -25,6 +25,9 @@ commands:
               when: on_fail
               command: |
                 if grep -q "has been executed successfully" ~/project/backend/migrations_output.txt; then
+                  cd ~/project/backend
+                  echo $(PWD)
+                  echo $(ls)
                   echo "Migration reverted successfully"
                 else
                   echo "Migration reverted successfully"
@@ -231,8 +234,7 @@ jobs:
               echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ".env"
               echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ".env"
               npm install
-              touch migrations_output.txt
-              npm run migrations >> migrations_output.txt
+              npm run migrations > migrations_output.txt
               cat migrations_output.txt
               if grep -q "has been executed successfully" migrations_output.txt; then
                 curl -H "Content-Type: text/plain" -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request PUT --data "1" https://api.memstash.io/values/migration_result
@@ -338,9 +340,69 @@ jobs:
               export FRONTEND_URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com/#/employees"
               if curl -s ${FRONTEND_URL} | grep "Welcome"
               then
-                return 1
+                echo "Frontend is working"
+                return 0
               else
+                echo "Frontend is not working"
                 return 1
+              fi
+        - destroy-environment:
+            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+        - revert-migrations
+        
+    cloudfront-update:
+      docker:
+        - image: amazon/aws-cli
+      steps:
+        - checkout
+        - run:
+            name: Install dependencies
+            command: |
+              yum -y install tar gzip
+        - run:
+            name: Update cloudfront distribution
+            command: |
+              export OldWorkflowID=$(aws cloudformation list-exports \
+              --query "Exports[?Name=='WorkflowID'].Value" \
+              --no-paginate --output text)
+  
+              echo OldWorkflowID: "$OldWorkflowID"
+  
+              curl -H "Content-Type: text/plain" -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request PUT --data "$OldWorkflowID" https://api.memstash.io/values/old_workflow_id
+  
+              aws cloudformation deploy \
+              --template-file /root/project/.circleci/files/cloudfront.yml \
+              --stack-name frontend-cloudfront \
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople
+        - destroy-environment:
+            workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
+        - revert-migrations
+
+    cleanup:
+      docker:
+        - image: amazon/aws-cli
+      steps:
+        - checkout
+        - run:
+            name: Get old stack workflow id and delete stack and bucket
+            command: |
+              yum -y install tar gzip
+              # your code here
+              export OldWorkflowID= $(curl -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request GET \
+              https://api.memstash.io/values/old_workflow_id)
+              export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+              --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
+
+              echo OldWorkflowID: "$OldWorkflowID"
+  
+              if if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+              then
+                aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+                aws cloudformation delete-stack --stack-name "backend-${OldWorkflowID}"
+                aws cloudformation delete-stack --stack-name "frontend-${OldWorkflowID}"
+              else
+                echo "Current workflow id and old workflow id are the same"
               fi
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -371,3 +433,5 @@ workflows:
                 requires: [run-migrations]
             - smoke-test:
                 requires: [deploy-frontend, deploy-backend]
+            - cloudfront-update:
+                requires: [smoke-test]
