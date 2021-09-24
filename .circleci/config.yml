@@ -311,7 +311,7 @@ jobs:
               zip -r backend.zip backend/
               cat .circleci/ansible/inventory.txt
               export ANSIBLE_HOST_KEY_CHECKING=False
-              ansible-playbook -i  .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
+              ansible-playbook -i  .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml --extra-vars="TYPEORM_HOST=$TYPEORM_HOST TYPEORM_PORT=$TYPEORM_PORT TYPEORM_USERNAME=$TYPEORM_USERNAME  TYPEORM_PASSWORD=$TYPEORM_PASSWORD TYPEORM_DATABASE=$TYPEORM_DATABASE"
         #- destroy-environment:
         #    workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
         # - revert-migrations
