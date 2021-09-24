@@ -343,11 +343,9 @@ jobs:
               export FRONTEND_URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com/#/employees"
               if curl -s ${FRONTEND_URL} | grep "Welcome"
               then
-                echo "Front-end is working"
-                exit 0
+                return 1
               else
-                echo "Frontend is not working"
-                exit 1
+                return 1
               fi
         - destroy-environment:
             workflowId: ${CIRCLE_WORKFLOW_ID:0:7}
