@@ -393,12 +393,17 @@ jobs:
               https://api.memstash.io/values/old_workflow_id)
               export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
               --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
+  
+              export BUCKET_EXISTS=$(aws s3 ls s3://udapeople-${OldWorkflowID} 2>&1 | grep -c 'index.html')
 
               echo OldWorkflowID: "$OldWorkflowID"
   
               if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
               then
-                aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive | echo "bucket does not exist"
+                if [$BUCKET_EXISTS -eq 1]
+                then
+                aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+                fi
                 aws cloudformation delete-stack --stack-name "backend-${OldWorkflowID}"
                 aws cloudformation delete-stack --stack-name "frontend-${OldWorkflowID}"
               else
