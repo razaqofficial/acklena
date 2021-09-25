@@ -388,7 +388,6 @@ jobs:
             name: Get old stack workflow id and delete stack and bucket
             command: |
               yum -y install tar gzip
-              # your code here
               export OldWorkflowID= $(curl -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request GET \
               https://api.memstash.io/values/old_workflow_id)
               export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
