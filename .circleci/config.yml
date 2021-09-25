@@ -388,14 +388,13 @@ jobs:
             name: Get old stack workflow id and delete stack and bucket
             command: |
               yum -y install tar gzip
-              export OldWorkflowID= $(curl -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request GET \
-              https://api.memstash.io/values/old_workflow_id)
+              export OldWorkflowID= $(curl -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request GET https://api.memstash.io/values/old_workflow_id)
               export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
               --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
   
               export BUCKET_EXISTS=$(aws s3 ls s3://udapeople-${OldWorkflowID} 2>&1 | grep -c 'index.html')
-
-              echo OldWorkflowID: "$OldWorkflowID"
+  
+              echo Old Workflow ID: "${OldWorkflowID}"
   
               if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
               then
@@ -415,18 +414,21 @@ jobs:
 workflows:
     default:
         jobs:
-           #- build-frontend
-           #- build-backend
-           #- test-frontend:
-           #      requires: [build-frontend]
-           #- test-backend:
-           #      requires: [build-backend]
-           #- scan-frontend:
-           #      requires: [build-frontend]
-           #- scan-backend:
-           #      requires: [build-backend]
-            - deploy-infrastructure
-               # requires: [test-frontend, test-backend, scan-backend, scan-frontend]
+            - build-frontend
+            - build-backend
+            - test-frontend:
+                requires: [build-frontend]
+            - test-backend:
+                requires: [build-backend]
+            - scan-frontend:
+                requires: [build-frontend]
+            - scan-backend:
+                requires: [build-backend]
+            - deploy-infrastructure:
+                requires: [test-frontend, test-backend, scan-backend, scan-frontend]
+                filters:
+                  branches:
+                    only: [ main ]
             - configure-infrastructure:
                 requires: [deploy-infrastructure]
                 filters:
@@ -436,30 +438,30 @@ workflows:
                 requires: [configure-infrastructure]
                 filters:
                   branches:
-                    only: [ main ]
+                    only: [main]
             - deploy-frontend:
                 requires: [run-migrations]
                 filters:
                   branches:
-                    only: [ main ]
+                    only: [main]
             - deploy-backend:
                 requires: [run-migrations]
                 filters:
                   branches:
-                    only: [ main ]
+                    only: [main]
             - smoke-test:
                 requires: [deploy-frontend, deploy-backend]
                 filters:
                   branches:
-                    only: [ main ]
+                    only: [main]
             - cloudfront-update:
                 requires: [smoke-test]
                 filters:
                   branches:
-                    only: [ main ]
+                    only: [main]
             - cleanup:
                 requires: [cloudfront-update]
                 filters:
                   branches:
-                    only: [ main ]
+                    only: [main]
               
