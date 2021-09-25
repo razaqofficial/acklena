@@ -70,3 +70,5 @@ UserInterfaceState.xcuserstate
 presentation.docx
 .env
 dist
+cloudformation.sh
+.circleci/files/prometheus_server.yml
