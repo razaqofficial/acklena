@@ -4,7 +4,7 @@
   apt:
     update_cache: yes
     
-- name: "upgrade packages"
+- name: "update package cache"
   become: yes
   apt:
     update_cache: yes

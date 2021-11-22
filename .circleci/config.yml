@@ -361,16 +361,21 @@ jobs:
             name: Install dependencies
             command: |
               yum -y install tar gzip
-        - run:
-            name: Update cloudfront distribution
-            command: |
-              export OldWorkflowID=$(aws cloudformation list-exports \
+        - run: 
+            name: Save previous workflow id
+            command: |    
+                export OldWorkflowID=$(aws cloudformation list-exports \
               --query "Exports[?Name=='WorkflowID'].Value" \
               --no-paginate --output text)
   
               echo OldWorkflowID: "$OldWorkflowID"
   
               curl -H "Content-Type: text/plain" -H "token: 410b2f76-bd4b-46cf-9235-85590067b4f5" --request PUT --data "$OldWorkflowID" https://api.memstash.io/values/old_workflow_id
+              
+        - run:
+            name: Update cloudfront distribution
+            command: |
+              
   
               aws cloudformation deploy \
               --template-file /root/project/.circleci/files/cloudfront.yml \
